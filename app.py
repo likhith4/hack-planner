@@ -1,41 +1,73 @@
-#this line adds functionality to our project :)
-from flask import Flask,render_template, redirect,request
+# this line imports functionality into our project, so we
+# don't have to write it ourselves!
+from flask import Flask, render_template, request, redirect
+import sqlite3
+app = Flask(__name__)
 
-app=Flask(__name__)
+items = []
 
-items=[]
+db_path = 'checklist.db'
 
-@app.route('/add',methods=['POST']) #CREATE 
-def add_items():
-    item=request.form['item']
-    items.append(item)#this will append the item to the array items
+def create_table():
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS checklist (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT)''')
+    conn.commit()
+    conn.close()
+
+def get_items():
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("SELECT * FROM checklist")
+    items = c.fetchall()
+    conn.close()
+    return items
+
+def add_item(item):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("INSERT INTO checklist (item) VALUES (?)", (item,))
+    conn.commit()
+    conn.close()
+
+def update_item(item_id, new_item):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("UPDATE checklist SET item = ? WHERE id = ?", (new_item, item_id))
+    conn.commit()
+    conn.close()
+
+def delete_item(item_id):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("DELETE FROM checklist WHERE id = ?", (item_id,))
+    conn.commit()
+    conn.close()
+
+@app.route('/')
+def checklist():
+    create_table()
+    items = get_items()
+    return render_template('checklist.html', items=items)
+
+@app.route('/add', methods=['POST'])
+def add():
+    item = request.form['item']
+    add_item(item)
     return redirect('/')
 
-'''by default route uses GET method 
-   which only lets user to receive'''
-
-@app.route('/') #READ 
-def checklist():
-    return render_template('checklist.html',items=items)
-
-#UPDATE FUNCTIONALITY 
-
-#Edit
-@app.route('/edit/<int:item_id>',methods=['GET','POST']) 
-def edit_item(item_id):
-    item=items[item_id-1]#Retrieves items based on the indexing if 1 it would go to 0 and if 2 it would retrieve the 1st one 
-    if request.method=='POST':
-        new_item = request.form['item'] #adds the index to new item as the last one 
-        items [item_id-1]=new_item
+@app.route('/edit/<int:item_id>', methods=['GET', 'POST'])
+def edit(item_id):
+    if request.method == 'POST':
+        new_item = request.form['item']
+        update_item(item_id, new_item)
         return redirect('/')
     else:
-        return render_template('edit.html', item=item, item_id=item_id)  #if the request method is not POST then it will display the previous item and item id not the one which is updated in the if statement
+        items = get_items()
+        item = next((x[1] for x in items if x[0] == item_id), None)
+        return render_template('edit.html', item=item, item_id=item_id)
 
-#Delete
 @app.route('/delete/<int:item_id>')
-def delete_item(item_id):
-    del items[item_id-1]
+def delete(item_id):
+    delete_item(item_id)
     return redirect('/')
-
-if __name__ =='__main__':
-    app.run(debug=True,port=8000)
