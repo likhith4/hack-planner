@@ -11,15 +11,24 @@
             {% for item in items %}
             <li>
                 {{ item[1] }}
-                <a href="/edit/{{ loop.index }}">Edit</a>
-                <a href="/delete/{{ loop.index }}">Delete</a>
+                <a href="/edit/{{ item[0] }}">Edit</a>
+                <a href="/delete/{{ item[0] }}">Delete</a>
+                <button onclick="setRemainder({{item[1]}})">Remainder</button>
             </li>
             {% endfor %}
         </ul>
         <form class = "add-form" action="/add" method="post">
             <input type="text" name="item" placeholder="Enter item">
             <button type="submit">Add</button>
+            
         </form>
-    </div>
+    </div> 
+    <script>
+        function setRemainder(item){
+            setTimeout(function(){
+                var remainder= confirm("Remainder: "+item);
+            },5*1000)
+        }
+    </script>
 </body>
 </html>
