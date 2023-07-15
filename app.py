@@ -2,6 +2,16 @@
 # don't have to write it ourselves!
 from flask import Flask, render_template, request, redirect
 import sqlite3
+import dotenv
+import requests
+def send_simple_message():
+	return requests.post(
+		"https://api.mailgun.net/v3/sandboxd6c2ea4c2c884250a549810fc39cb5c7.mailgun.org/messages",
+		auth=("api", "YOUR_API_KEY"),
+		data={"from": "Excited User <mailgun@sandboxd6c2ea4c2c884250a549810fc39cb5c7.mailgun.org>",
+			"to": ["bar@example.com", "YOU@sandboxd6c2ea4c2c884250a549810fc39cb5c7.mailgun.org"],
+			"subject": "Hello Likhith",
+			"text": "This is a remainder to Test!"})
 app = Flask(__name__)
 
 items = []
